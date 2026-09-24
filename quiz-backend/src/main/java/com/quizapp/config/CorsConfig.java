@@ -37,6 +37,12 @@ public class CorsConfig {
         if (!origins.contains("http://127.0.0.1:5173")) {
             origins.add("http://127.0.0.1:5173");
         }
+		if (!origins.contains("https://asmj.co.in")) {
+            origins.add("https://asmj.co.in");
+        }
+        if (!origins.contains("https://www.asmj.co.in")) {
+            origins.add("https://www.asmj.co.in");
+        }
 
         config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
