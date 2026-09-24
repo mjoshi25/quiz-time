@@ -1,0 +1,4 @@
+type,question,optionA,optionB,optionC,optionD,correctAnswer,difficulty,explanation,imageUrl
+MCQ,"What is the capital of India?",Mumbai,New Delhi,Kolkata,Chennai,New Delhi,EASY,"New Delhi is the capital of India.",
+TRUE_FALSE,"The Earth revolves around the Sun.",True,False,,,True,EASY,"Earth completes an orbit around the Sun.",
+CORRECT_WORD,"Choose the correct word: The children ____ playing.",is,are,was,be,are,EASY,"The plural subject children takes are.",

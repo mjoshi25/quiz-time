@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-labelledby="title desc">
+  <title id="title">asmj-Quizora</title>
+  <desc id="desc">asmj-Quizora logo</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset=".55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="112" height="112" rx="30" fill="#0b1020"/>
+  <rect x="16" y="16" width="88" height="88" rx="24" fill="url(#g)"/>
+  <path d="M43 39h28c9 0 16 7 16 16v10c0 9-7 16-16 16H59l-8 10v-10h-8c-9 0-16-7-16-16V55c0-9 7-16 16-16Z" fill="#fff" opacity=".96"/>
+  <path d="M43 51h28M43 61h20M43 71h25" stroke="#4f46e5" stroke-width="6" stroke-linecap="round"/>
+  <text x="135" y="76" font-family="Space Grotesk,Arial,sans-serif" font-size="48" font-weight="700" fill="#fff">asmj</text>
+  <text x="265" y="76" font-family="Space Grotesk,Arial,sans-serif" font-size="48" font-weight="700" fill="url(#g)">-Quizora</text>
+</svg>

@@ -1,0 +1,12 @@
+import {useEffect,useState} from "react";
+import {api} from "../api/apiClient";
+function dl(blob,name){const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
+function fmt(v){return v?new Date(v).toLocaleString():"—"}
+export default function AdminAuditPage(){
+ const [rows,setRows]=useState([]),[q,setQ]=useState(""),[action,setAction]=useState(""),[from,setFrom]=useState(""),[to,setTo]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(true);
+ async function load(){try{setLoading(true);setError("");setRows(await api.adminAudit({q,action,from,to})||[])}catch(e){setError(e.message||"Unable to load audit log.")}finally{setLoading(false)}}
+ useEffect(()=>{load()},[]);
+ return <main className="page-shell"><div className="page-heading"><div><span className="eyebrow">GOVERNANCE</span><h1>Audit history</h1><p>Search administrative, host and competition actions recorded by Quizora.</p></div><div className="form-actions"><button className="button-ghost dark small" onClick={load}>↻ Refresh</button><button className="button-primary small" onClick={async()=>dl(await api.exportAdminAudit({q,action,from,to}),"quizora-audit-log.csv")}>Export CSV</button></div></div>
+ <section className="table-panel"><div className="table-head"><div><h2>Action history</h2><p>{rows.length} records shown</p></div></div><div className="admin-filter-grid"><input placeholder="Search actor, action or entity" value={q} onChange={e=>setQ(e.target.value)}/><input placeholder="Action e.g. QUIZ_STARTED" value={action} onChange={e=>setAction(e.target.value)}/><label>From<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>To<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label><button className="button-primary" onClick={load}>Apply</button></div>{error&&<div className="alert error">{error}</div>}
+ <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{fmt(r.createdAt)}</td><td><strong>{r.actorEmail}</strong><small>{r.actorRole}</small></td><td><span className="status-pill neutral">{r.action}</span></td><td><strong>{r.entityName||"—"}</strong><small>{r.entityType} · {r.entityId||"—"}</small></td><td>{r.details||"—"}</td></tr>)}{!rows.length&&!loading&&<tr><td colSpan="5">No audit records match the selected filters.</td></tr>}</tbody></table></div></section></main>
+}
