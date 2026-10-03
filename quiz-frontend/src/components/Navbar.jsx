@@ -43,7 +43,7 @@ export default function Navbar() {
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
-          <span aria-hidden="true">{open ? "×" : "☰"}</span>
+          <span className={open ? "menu-icon menu-icon-close" : "menu-icon menu-icon-open"} aria-hidden="true">{open ? "×" : "☰"}</span>
         </button>
         <nav className="nav-links" aria-label="Primary navigation">{links()}</nav>
       </header>

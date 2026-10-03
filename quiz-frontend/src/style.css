@@ -710,6 +710,12 @@ body { overflow-x: hidden; }
     z-index: 30;
   }
 
+  .public-page .mobile-toggle::before,
+  .public-page .mobile-toggle::after {
+    content: none !important;
+    display: none !important;
+  }
+
   .public-page .mobile-toggle span {
     display: block;
     width: 1em;
@@ -743,10 +749,10 @@ body { overflow-x: hidden; }
     width: 100%;
     max-width: 520px;
     margin: 0 auto;
-    padding: 10px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 4px;
     background: #111827;
     border: 1px solid #334155;
     border-radius: 16px;
@@ -756,13 +762,16 @@ body { overflow-x: hidden; }
   .public-page .mobile-menu-links a,
   .public-page .mobile-menu-links button {
     width: 100%;
-    min-height: 46px;
+    min-height: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 14px;
+    padding: 8px 12px !important;
+    margin: 0 !important;
     border-radius: 10px;
     box-sizing: border-box;
+    line-height: 1.15 !important;
   }
 
   .public-page .mobile-menu-links a {
