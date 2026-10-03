@@ -169,3 +169,498 @@ body{overflow-x:hidden;background:#070b18}
 .sidebar{position:relative;z-index:2;box-shadow:8px 0 30px rgba(15,23,42,.16)}
 @media(max-width:650px){.brand-logo-wrap{width:36px;height:36px}.brand-name{font-size:18px}.brand.compact .brand-logo-wrap{width:32px;height:32px}.quizora-app::after{background-size:48px 48px;opacity:.12}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.quizora-app::before,.quizora-app::after,.public-page::before,.public-page::after,.auth-page::before,.auth-page::after,.simple-page::before,.simple-page::after,.certificate-page::before,.certificate-page::after,.dashboard-shell::before,.dashboard-shell::after,.visual-card-main,.visual-card-back,.floating-score{animation:none}.feature-grid article,.stat-card,.table-panel,.profile-panel,.form-card,.quiz-card,.empty-panel,.winner-card,.achievement-card,.auth-panel,.certificate-sheet,.guest-action-panel,.quiz-detail-hero,.result-card,.analytics-card,.metric-list>div{transition:none}}
+
+
+/* ================================================================
+   Quizora responsive layout system
+   Final override layer: keeps every page usable from 320px to desktop.
+   ================================================================ */
+
+html, body, #root {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+img, svg, video, canvas { max-width: 100%; }
+button, a, input, select, textarea { max-width: 100%; }
+
+/* Public header */
+.public-page .navbar {
+  position: relative;
+  width: min(1180px, 100%);
+  min-height: 78px;
+  height: auto;
+  padding: 16px 28px;
+  gap: 20px;
+}
+
+.public-page .mobile-toggle {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.public-page .nav-links {
+  min-width: 0;
+}
+
+/* Landing hero: never rely on fixed heights or negative positioning. */
+.landing-hero {
+  width: min(1180px, 100%);
+  min-width: 0;
+}
+
+.landing-copy,
+.quiz-visual,
+.feature-section,
+.how-section {
+  min-width: 0;
+}
+
+.landing-copy h1 {
+  max-width: 760px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.landing-copy h1 span {
+  white-space: normal;
+}
+
+.hero-actions > a,
+.hero-actions > button {
+  min-height: 48px;
+}
+
+/* Keep the visual self-contained at every width. */
+.quiz-visual {
+  width: 100%;
+  max-width: 450px;
+  margin-inline: auto;
+  overflow: visible;
+}
+
+.visual-card-main {
+  max-width: calc(100% - 30px);
+}
+
+.visual-card-back {
+  max-width: calc(100% - 70px);
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .public-page .navbar { padding-inline: 22px; }
+
+  .landing-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+    gap: 35px;
+    padding: 64px 22px 76px;
+  }
+
+  .landing-copy h1 {
+    font-size: clamp(42px, 6vw, 62px);
+  }
+
+  .feature-section,
+  .how-section { padding-inline: 22px; }
+
+  .dashboard-topbar { padding-inline: 24px; }
+  .dashboard-content { padding: 30px 24px 60px; }
+}
+
+/* Tablet / small laptop: stack public hero. */
+@media (max-width: 900px) {
+  .landing-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+    align-items: start;
+  }
+
+  .landing-copy { max-width: 760px; }
+
+  .quiz-visual {
+    order: 2;
+    width: min(100%, 450px);
+    min-height: 400px;
+  }
+
+  .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .auth-layout {
+    width: min(100%, 900px);
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .auth-promo { text-align: center; }
+  .auth-promo p { margin-inline: auto; }
+
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Phones */
+@media (max-width: 650px) {
+  body { font-size: 15px; }
+
+  .public-page {
+    overflow-x: clip;
+  }
+
+  .public-page .navbar {
+    width: 100%;
+    min-height: 72px;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .public-page .brand {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 19px;
+  }
+
+  .public-page .brand-logo-wrap {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .public-page .brand-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .public-page .mobile-toggle {
+    display: inline-flex;
+    font-size: 0;
+  }
+
+  .public-page .mobile-toggle::before {
+    content: "☰";
+    font-size: 29px;
+  }
+
+  .public-page .nav-links {
+    display: none;
+  }
+
+  .public-page .nav-links.open {
+    position: absolute;
+    display: flex;
+    top: calc(100% - 2px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    margin: 0;
+    padding: 10px;
+    gap: 4px;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(10, 16, 34, .98);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    z-index: 100;
+  }
+
+  .public-page .nav-links.open a,
+  .public-page .nav-links.open button {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+  }
+
+  .landing-hero {
+    width: 100%;
+    padding: 38px 16px 58px;
+    gap: 28px;
+  }
+
+  .landing-copy { width: 100%; }
+
+  .eyebrow {
+    display: block;
+    max-width: 100%;
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 1.5px;
+  }
+
+  .landing-copy h1,
+  .auth-promo h1 {
+    font-size: clamp(40px, 12.5vw, 58px);
+    line-height: .99;
+    letter-spacing: -1.8px;
+    margin: 15px 0 18px;
+  }
+
+  .landing-copy h1 span {
+    display: block;
+    margin-top: 4px;
+  }
+
+  .landing-copy p,
+  .auth-promo p {
+    max-width: 100%;
+    font-size: 16px;
+    line-height: 1.65;
+    margin-top: 0;
+  }
+
+  .hero-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .hero-actions > a,
+  .hero-actions > button {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 14px 16px;
+  }
+
+  .trust-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+    margin-top: 24px;
+    font-size: 13px;
+  }
+
+  /* Reset the old mobile transform that caused the visual to drift/overlap. */
+  .quiz-visual {
+    order: 2;
+    width: 100%;
+    max-width: 390px;
+    min-height: 360px;
+    height: 360px;
+    margin: 0 auto;
+    transform: none !important;
+    overflow: hidden;
+  }
+
+  .visual-card-main {
+    position: absolute;
+    left: 50%;
+    top: 36px;
+    width: min(350px, calc(100% - 22px));
+    max-width: none;
+    padding: 19px;
+    transform: translateX(-50%);
+    border-radius: 18px;
+  }
+
+  .visual-card-back {
+    position: absolute;
+    top: 8px;
+    right: -2px;
+    width: min(270px, calc(100% - 55px));
+    max-width: none;
+    height: 105px;
+    padding: 16px;
+  }
+
+  .visual-top { margin-bottom: 17px; }
+  .visual-card-main h3 {
+    font-size: 17px;
+    line-height: 1.35;
+    margin-bottom: 14px;
+  }
+  .answer { padding: 10px 11px; margin-top: 7px; font-size: 12px; }
+  .progress { margin-top: 18px; }
+
+  .floating-score {
+    left: 8px;
+    bottom: 8px;
+    padding: 13px 16px;
+    border-radius: 14px;
+  }
+  .floating-score strong { font-size: 26px; }
+
+  .feature-section,
+  .how-section {
+    width: 100%;
+    padding: 30px 16px 58px;
+  }
+
+  .feature-section h2,
+  .how-section h2 {
+    font-size: clamp(27px, 8vw, 34px);
+    line-height: 1.12;
+    margin: 12px 0 20px;
+  }
+
+  .feature-grid { grid-template-columns: 1fr; gap: 12px; }
+  .feature-grid article { padding: 20px; }
+
+  /* Auth pages */
+  .auth-page { padding: 16px; overflow-x: clip; }
+  .auth-brand { width: 100%; }
+  .auth-layout { width: 100%; margin: 35px auto; gap: 22px; }
+  .auth-panel { width: 100%; padding: 22px 18px; border-radius: 18px; }
+  .auth-panel h2 { font-size: 24px; }
+  .role-tabs { flex-wrap: wrap; }
+
+  /* Dashboard */
+  .dashboard-shell { display: block; min-height: 100vh; overflow-x: clip; }
+  .sidebar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .side-profile {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+  }
+  .side-profile > div:last-child { display: none; }
+  .side-label, .side-help-link { display: none; }
+  .side-link {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .side-link span { display: inline; }
+
+  .dashboard-topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .dashboard-topbar .brand-name { font-size: 17px; }
+  .top-actions { gap: 8px; }
+  .top-actions > span { display: none; }
+  .dashboard-content { padding: 22px 14px 50px; }
+
+  .page-heading { gap: 14px; margin-bottom: 20px; }
+  .page-heading h1 { font-size: 28px; line-height: 1.1; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .approval-banner { padding: 15px; }
+
+  .table-panel,
+  .profile-panel,
+  .form-card,
+  .empty-panel,
+  .quiz-card,
+  .result-card,
+  .analytics-card { max-width: 100%; overflow-x: auto; }
+
+  .table-head { padding: 17px 16px; }
+  .host-list { padding: 0 16px; }
+  .row-actions { padding-left: 0; }
+
+  /* Generic grids/forms used across participant, host and admin screens. */
+  .form-grid,
+  .publication-grid,
+  .detail-grid,
+  .result-grid,
+  .quiz-detail-hero,
+  .profile-grid,
+  .help-grid,
+  .metric-grid { grid-template-columns: 1fr !important; }
+
+  .form-actions { flex-direction: column; align-items: stretch; }
+  .form-actions > * { width: 100%; }
+
+  .discovery-filter-row { grid-template-columns: 1fr; }
+  .discovery-search { grid-column: auto; }
+  .discovery-summary { flex-direction: column; align-items: flex-start; }
+
+  /* Tables should scroll horizontally instead of breaking the viewport. */
+  .table-responsive,
+  .table-panel table,
+  table { max-width: 100%; }
+  .table-panel { overflow-x: auto; }
+
+  /* Quiz attempt / result screens */
+  .quiz-play-header {
+    min-height: 64px;
+    height: auto;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .competition-layout { grid-template-columns: 1fr !important; }
+  .question-map { position: static !important; }
+  .quiz-question-card { min-width: 0; }
+
+  footer { padding: 22px 16px; }
+}
+
+/* Very small phones: 320–380px */
+@media (max-width: 380px) {
+  .public-page .navbar { padding-inline: 12px; }
+  .public-page .brand-name { font-size: 17px; }
+  .landing-hero { padding-inline: 12px; }
+  .landing-copy h1 { font-size: clamp(37px, 12vw, 48px); }
+  .button-primary, .button-ghost { padding-inline: 13px; }
+  .feature-section, .how-section { padding-inline: 12px; }
+  .quiz-visual { min-height: 335px; height: 335px; }
+  .visual-card-main { top: 32px; padding: 16px; }
+  .visual-card-main h3 { font-size: 16px; }
+  .visual-card-back { height: 92px; font-size: 12px; }
+  .floating-score { left: 2px; bottom: 3px; }
+}
+
+/* Desktop guardrails */
+@media (min-width: 1101px) {
+  .landing-hero { padding-top: 76px; }
+  .landing-copy h1 { max-width: 700px; }
+}
+
+/* Avoid hover transforms on touch devices; they can create visual drift. */
+@media (hover: none), (pointer: coarse) {
+  .brand:hover,
+  .brand:hover .brand-logo-wrap,
+  .feature-grid article:hover,
+  .stat-card:hover,
+  .table-panel:hover,
+  .profile-panel:hover,
+  .form-card:hover,
+  .quiz-card:hover,
+  .winner-card:hover,
+  .achievement-card:hover,
+  .auth-panel:hover,
+  .certificate-sheet:hover,
+  .guest-action-panel:hover,
+  .quiz-detail-hero:hover,
+  .result-card:hover,
+  .analytics-card:hover,
+  .metric-list>div:hover,
+  .button-primary:hover,
+  .button-ghost:hover,
+  .nav-primary:hover,
+  .nav-outline:hover,
+  .icon-button:hover,
+  .row-actions button:hover,
+  .side-link:hover,
+  .pagination button:hover {
+    transform: none;
+    filter: none;
+  }
+}
