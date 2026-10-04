@@ -140,7 +140,7 @@ body{overflow-x:hidden;background:#070b18}
 .quizora-app::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.18;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:70px 70px;mask-image:radial-gradient(circle at center,black 15%,transparent 82%);animation:q4dGrid 24s linear infinite}
 @keyframes q4dWorld{0%{transform:translate3d(-2%,1%,0) scale(1);filter:blur(20px) hue-rotate(0deg)}50%{transform:translate3d(2%,-2%,0) scale(1.06);filter:blur(24px) hue-rotate(10deg)}100%{transform:translate3d(-1%,2%,0) scale(1.02);filter:blur(20px) hue-rotate(-8deg)}}
 @keyframes q4dGrid{from{transform:perspective(900px) rotateX(58deg) translateY(-8%)}to{transform:perspective(900px) rotateX(58deg) translateY(2%)}}
-.public-page,.auth-page,.simple-page,.certificate-page,.dashboard-shell{position:relative;z-index:0;overflow:hidden}
+.public-page,.auth-page,.simple-page,.certificate-page,.dashboard-shell{position:relative;z-index:0;overflow:visible}
 .public-page::before,.auth-page::before,.simple-page::before,.certificate-page::before,.dashboard-shell::before{content:"";position:absolute;width:360px;height:360px;border-radius:50%;right:-160px;top:120px;background:radial-gradient(circle,rgba(6,182,212,.16),transparent 68%);filter:blur(8px);pointer-events:none;animation:q4dOrb 12s ease-in-out infinite}
 .public-page::after,.auth-page::after,.simple-page::after,.certificate-page::after,.dashboard-shell::after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;left:-150px;bottom:80px;background:radial-gradient(circle,rgba(124,58,237,.15),transparent 68%);filter:blur(10px);pointer-events:none;animation:q4dOrb 15s ease-in-out infinite reverse}
 @keyframes q4dOrb{0%,100%{transform:translate3d(0,0,0) scale(.9)}50%{transform:translate3d(-40px,30px,70px) scale(1.18)}}
@@ -947,6 +947,47 @@ body { overflow-x: hidden; }
   .quizora-app * { -webkit-tap-highlight-color: transparent; }
 }
 
+
+/* ================================================================
+   SINGLE PAGE SCROLL POLICY
+   Keep one vertical scroll container: the browser document.
+   Individual application/page shells must not create nested vertical
+   scrolling contexts on desktop. Horizontal overflow remains clipped.
+   ================================================================ */
+html, body {
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root,
+.quizora-app,
+.public-page,
+.auth-page,
+.simple-page,
+.certificate-page,
+.dashboard-shell,
+.dashboard-main,
+.dashboard-content {
+  height: auto;
+  min-height: 0;
+  overflow-y: visible;
+}
+
+.quizora-app {
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.public-page,
+.auth-page,
+.simple-page,
+.certificate-page,
+.dashboard-shell {
+  overflow-x: clip;
+  overflow-y: visible;
+}
 
 /* ================================================================
    Quizora nature animation - landing page only
