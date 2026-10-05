@@ -954,11 +954,18 @@ body { overflow-x: hidden; }
    Individual application/page shells must not create nested vertical
    scrolling contexts on desktop. Horizontal overflow remains clipped.
    ================================================================ */
-html, body {
+html {
   min-height: 100%;
   height: auto;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
+}
+
+body {
+  min-height: 100%;
+  height: auto;
+  margin: 0;
+  overflow: visible;
 }
 
 #root,
