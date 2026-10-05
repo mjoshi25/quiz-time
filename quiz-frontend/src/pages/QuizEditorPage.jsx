@@ -14,6 +14,7 @@ const emptyQuestion = () => ({
 
 function normalizeQuestion(q) {
   return {
+    ...(q?.bankId ? { bankId: q.bankId } : {}),
     type: q?.type || "MCQ",
     question: q?.question || "",
     options: q?.type === "TRUE_FALSE" ? ["True", "False"] : (Array.isArray(q?.options) ? [...q.options, "", "", "", ""].slice(0, 4) : ["", "", "", ""]),
@@ -37,6 +38,7 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
   const [bankItems, setBankItems] = useState([]);
   const [bankLoading, setBankLoading] = useState(false);
   const [bankMessage, setBankMessage] = useState("");
+  const [bankAddedIds, setBankAddedIds] = useState(() => new Set());
 
   useEffect(() => {
     if (!edit) return;
@@ -60,6 +62,13 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
       .finally(() => setLoading(false));
   }, [edit, id, admin]);
 
+  useEffect(() => {
+    if (!bankOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [bankOpen]);
+
   function updateQuiz(field, value) { setQuiz(p => ({ ...p, [field]: value })); }
   function updateQuestion(index, field, value) {
     setQuiz(p => ({ ...p, questions: p.questions.map((q, i) => i === index
@@ -76,7 +85,14 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
     finally { setBankLoading(false); }
   }
   function addFromBank(item) {
-    setQuiz(p => ({ ...p, questions: [...p.questions, normalizeQuestion(item)] }));
+    const bankId = item?.id;
+    if (!bankId || bankAddedIds.has(bankId)) return;
+    setQuiz(p => ({ ...p, questions: [...p.questions, { ...normalizeQuestion(item), bankId }] }));
+    setBankAddedIds(prev => {
+      const next = new Set(prev);
+      next.add(bankId);
+      return next;
+    });
     setBankMessage("Question added to this quiz.");
   }
   async function saveToBank(q) {
@@ -137,7 +153,45 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
           <label>Answer explanation (optional)<textarea rows="3" value={q.explanation} onChange={e => updateQuestion(i, "explanation", e.target.value)} placeholder="Explain why the correct answer is right. Participants can review this after submitting." /></label>
         </div>)}
       </section>
-      {bankOpen && <div className="modal-backdrop" onClick={() => setBankOpen(false)}><div className="bank-modal" onClick={e => e.stopPropagation()}><div className="section-title-row"><div><span className="eyebrow">QUESTION BANK</span><h2>Reuse saved questions</h2><p>Select any question to append it to this quiz.</p></div><button className="button-ghost dark small" type="button" onClick={() => setBankOpen(false)}>Close</button></div>{bankMessage && <div className="alert success">{bankMessage}</div>}{bankLoading ? <div className="table-empty">Loading question bank…</div> : !bankItems.length ? <div className="table-empty"><h3>Your question bank is empty</h3><p>Save questions from this editor or import a CSV from the Question Bank page.</p><Link className="button-ghost dark small" to="/host/question-bank">Open question bank</Link></div> : <div className="bank-modal-list">{bankItems.map(item => <div className="bank-row" key={item.id}><div className="bank-info"><div className="bank-meta"><span className="status-pill approved">{item.difficulty}</span><span>{item.type}</span></div><strong>{item.question}</strong><small>{(item.options || []).filter(Boolean).join(" · ") || "True / False"}</small></div><button className="button-primary small" type="button" onClick={() => addFromBank(item)}>Add</button></div>)}</div>}</div></div>}{error && <div className="alert error">{error}</div>}{saved && <div className="alert success">{saved}</div>}
+      {bankOpen && <div className="modal-backdrop bank-modal-backdrop" role="dialog" aria-modal="true" aria-label="Question Bank">
+        <div className="bank-modal" onClick={e => e.stopPropagation()}>
+          <div className="bank-modal-header">
+            <div>
+              <span className="eyebrow">QUESTION BANK</span>
+              <h2>Reuse saved questions</h2>
+              <p>Select any question to append it to this quiz.</p>
+            </div>
+            <button className="button-ghost dark small" type="button" onClick={() => setBankOpen(false)}>Close</button>
+          </div>
+
+          {bankMessage && <div className="alert success bank-modal-message">{bankMessage}</div>}
+
+          <div className="bank-modal-content">
+            {bankLoading ? <div className="table-empty">Loading question bank…</div> :
+              !bankItems.length ? <div className="table-empty"><h3>Your question bank is empty</h3><p>Save questions from this editor or import a CSV from the Question Bank page.</p><Link className="button-ghost dark small" to="/host/question-bank">Open question bank</Link></div> :
+              <div className="bank-modal-list">
+                {bankItems.map(item => {
+                  const added = bankAddedIds.has(item.id);
+                  return <div className={`bank-row${added ? " bank-row-added" : ""}`} key={item.id}>
+                    <div className="bank-info">
+                      <div className="bank-meta"><span className="status-pill approved">{item.difficulty}</span><span>{item.type}</span></div>
+                      <strong>{item.question}</strong>
+                      <small>{(item.options || []).filter(Boolean).join(" · ") || "True / False"}</small>
+                    </div>
+                    <button className={added ? "button-ghost dark small bank-added-button" : "button-primary small"} type="button" disabled={added} onClick={() => addFromBank(item)}>
+                      {added ? "✓ Added" : "Add"}
+                    </button>
+                  </div>;
+                })}
+              </div>}
+          </div>
+
+          <div className="bank-modal-footer">
+            <span>{bankItems.filter(item => bankAddedIds.has(item.id)).length} added · {bankItems.filter(item => !bankAddedIds.has(item.id)).length} available</span>
+            <button className="button-primary small" type="button" onClick={() => setBankOpen(false)}>Done</button>
+          </div>
+        </div>
+      </div>}{error && <div className="alert error">{error}</div>}{saved && <div className="alert success">{saved}</div>}
       <div className="form-actions"><button className="button-ghost dark" type="button" disabled={busy} onClick={e => submit(e, false)}>{busy && !publishAfterSave ? "Saving…" : "Save changes"}</button>{!admin && <button className="button-primary" type="button" disabled={busy} onClick={e => submit(e, true)}>{busy && publishAfterSave ? "Publishing…" : "Save & publish"}<span>→</span></button>}</div>
     </form>
   </div>;
