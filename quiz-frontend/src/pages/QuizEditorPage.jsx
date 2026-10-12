@@ -28,7 +28,7 @@ function normalizeQuestion(q) {
 export default function QuizEditorPage({ edit = false, admin = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [quiz, setQuiz] = useState({ title: "", description: "", category: "Other", topic: "", durationMinutes: 10, pointsPerCorrect: 1, negativeMarkingEnabled: false, penaltyPerWrong: 0, allowRetake: false, maxAttempts: 1, scheduledStartAt: "", scheduledEndAt: "", questions: [emptyQuestion()] });
+  const [quiz, setQuiz] = useState({ title: "", description: "", category: "Other", topic: "", durationMinutes: 10, pointsPerCorrect: 1, negativeMarkingEnabled: false, penaltyPerWrong: 0, allowRetake: false, maxAttempts: 1, resultPublished: true, certificateEnabled: false, certificateTopRanks: 3, prizeDescription: "", scheduledStartAt: "", scheduledEndAt: "", questions: [emptyQuestion()] });
   const [loading, setLoading] = useState(edit);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
@@ -39,6 +39,10 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
   const [bankLoading, setBankLoading] = useState(false);
   const [bankMessage, setBankMessage] = useState("");
   const [bankAddedIds, setBankAddedIds] = useState(() => new Set());
+  const [sourceQuizzes, setSourceQuizzes] = useState([]);
+  const [sourceQuizId, setSourceQuizId] = useState("");
+  const [sourceLoading, setSourceLoading] = useState(false);
+  const [sourceMessage, setSourceMessage] = useState("");
 
   useEffect(() => {
     if (!edit) return;
@@ -54,6 +58,10 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
         penaltyPerWrong: data.penaltyPerWrong ?? 0,
         allowRetake: data.allowRetake === true,
         maxAttempts: data.maxAttempts ?? 1,
+        resultPublished: data.resultPublished ?? true,
+        certificateEnabled: data.certificateEnabled === true,
+        certificateTopRanks: data.certificateTopRanks ?? 3,
+        prizeDescription: data.prizeDescription || "",
         scheduledStartAt: data.scheduledStartAt ? data.scheduledStartAt.slice(0,16) : "",
         scheduledEndAt: data.scheduledEndAt ? data.scheduledEndAt.slice(0,16) : "",
         questions: data.questions?.length ? data.questions.map(normalizeQuestion) : [emptyQuestion()]
@@ -61,6 +69,17 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
       .catch(e => setError(e.message || "Unable to load quiz."))
       .finally(() => setLoading(false));
   }, [edit, id, admin]);
+
+  useEffect(() => {
+    if (edit || admin) return;
+    let active = true;
+    setSourceLoading(true);
+    api.myQuizzes()
+      .then(data => { if (active) setSourceQuizzes(Array.isArray(data) ? data : []); })
+      .catch(e => { if (active) setSourceMessage(e.message || "Previous quizzes could not be loaded."); })
+      .finally(() => { if (active) setSourceLoading(false); });
+    return () => { active = false; };
+  }, [edit, admin]);
 
   useEffect(() => {
     if (!bankOpen) return;
@@ -76,8 +95,45 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
       : q) }));
   }
   function updateOption(index, option, value) { setQuiz(p => ({ ...p, questions: p.questions.map((q, i) => i === index ? { ...q, options: q.options.map((o, j) => j === option ? value : o) } : q) })); }
-  function addQuestion() { setQuiz(p => ({ ...p, questions: [...p.questions, emptyQuestion()] })); }
+  function addQuestion() {
+    const nextIndex = quiz.questions.length;
+    setQuiz(p => ({ ...p, questions: [...p.questions, emptyQuestion()] }));
+    window.setTimeout(() => {
+      document.getElementById(`question-editor-${nextIndex}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }
   function removeQuestion(index) { setQuiz(p => ({ ...p, questions: p.questions.filter((_, i) => i !== index) })); }
+  function clonePreviousQuiz() {
+    const source = sourceQuizzes.find(item => item.id === sourceQuizId);
+    if (!source) {
+      setSourceMessage("Choose a previous quiz first.");
+      return;
+    }
+    setQuiz({
+      title: `${source.title || "Quiz"} (Copy)`,
+      description: source.description || "",
+      category: source.category || "Other",
+      topic: source.topic || "",
+      durationMinutes: source.durationMinutes || 10,
+      pointsPerCorrect: source.pointsPerCorrect ?? 1,
+      negativeMarkingEnabled: source.negativeMarkingEnabled === true,
+      penaltyPerWrong: source.penaltyPerWrong ?? 0,
+      allowRetake: source.allowRetake === true,
+      maxAttempts: source.maxAttempts ?? 1,
+      resultPublished: source.resultPublished ?? true,
+      certificateEnabled: source.certificateEnabled === true,
+      certificateTopRanks: source.certificateTopRanks ?? 3,
+      prizeDescription: source.prizeDescription || "",
+      scheduledStartAt: "",
+      scheduledEndAt: "",
+      questions: source.questions?.length ? source.questions.map(normalizeQuestion) : [emptyQuestion()]
+    });
+    setBankAddedIds(new Set());
+    setError("");
+    setSaved("");
+    setSourceMessage("Quiz copied into a new draft. Change the title and any details before saving.");
+    window.setTimeout(() => document.querySelector('.quiz-form input[placeholder^="e.g. General Knowledge"]')?.focus(), 50);
+  }
   async function openBank() {
     setBankOpen(true); setBankLoading(true); setBankMessage("");
     try { setBankItems(await api.questionBank() || []); }
@@ -138,9 +194,24 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
       <Link className="button-ghost dark" to={admin ? "/admin" : "/host"}>← Back</Link>
     </div>
     <form className="quiz-form" onSubmit={e => submit(e, false)}>
+      {!edit && !admin && <section className="form-card clone-quiz-card">
+        <h2>Start from a previous quiz</h2>
+        <p>Copy the questions and settings from one of your quizzes into a new draft. Your original quiz will not be changed.</p>
+        <div className="clone-quiz-controls">
+          <label>Previous quiz
+            <select value={sourceQuizId} onChange={e => { setSourceQuizId(e.target.value); setSourceMessage(""); }}>
+              <option value="">Choose a quiz to copy…</option>
+              {sourceQuizzes.map(item => <option key={item.id} value={item.id}>{item.title} · {item.questions?.length || 0} questions</option>)}
+            </select>
+          </label>
+          <button type="button" className="button-ghost dark" onClick={clonePreviousQuiz} disabled={sourceLoading || !sourceQuizId}>{sourceLoading ? "Loading quizzes…" : "Clone quiz"}</button>
+        </div>
+        {sourceMessage && <div className={sourceMessage.startsWith("Quiz copied") ? "alert success clone-message" : "alert error clone-message"}>{sourceMessage}</div>}
+        {!sourceLoading && sourceQuizzes.length === 0 && <small className="clone-hint">No previous quizzes are available to copy yet.</small>}
+      </section>}
       <section className="form-card"><h2>Competition details</h2><label>Quiz title<input required value={quiz.title} onChange={e => updateQuiz("title", e.target.value)} placeholder="e.g. General Knowledge Challenge" /></label><label>Description<textarea value={quiz.description} onChange={e => updateQuiz("description", e.target.value)} placeholder="Tell participants what this quiz is about." rows="4" /></label><div className="schedule-grid"><label>Category<select value={quiz.category} onChange={e => updateQuiz("category", e.target.value)}><option>General Knowledge</option><option>Science</option><option>Technology</option><option>India & World</option><option>Sports</option><option>History</option><option>Geography</option><option>Mathematics</option><option>Language</option><option>Current Affairs</option><option>Other</option></select></label><label>Topic / tags<input value={quiz.topic} onChange={e => updateQuiz("topic", e.target.value)} placeholder="e.g. Space, Physics, World History" /><small>Use a short topic phrase to make this competition easier to discover.</small></label></div><div className="schedule-grid"><label>Duration (minutes)<input type="number" min="1" max="180" value={quiz.durationMinutes} onChange={e => updateQuiz("durationMinutes", Number(e.target.value))} /><small>Participants get this much time after they start.</small></label><label>Points per correct answer<input type="number" min="1" max="100" value={quiz.pointsPerCorrect} onChange={e => updateQuiz("pointsPerCorrect", Number(e.target.value))} /><small>Every correct answer earns this many points.</small></label><label>Scheduled start (optional)<input type="datetime-local" value={quiz.scheduledStartAt || ""} onChange={e => updateQuiz("scheduledStartAt", e.target.value)} /><small>Leave blank to allow starting immediately after publish.</small></label><label>Scheduled end (optional)<input type="datetime-local" value={quiz.scheduledEndAt || ""} onChange={e => updateQuiz("scheduledEndAt", e.target.value)} /><small>New attempts are blocked after this time.</small></label></div><div className="scoring-settings"><label className="checkbox-row"><input type="checkbox" checked={quiz.negativeMarkingEnabled} onChange={e => updateQuiz("negativeMarkingEnabled", e.target.checked)} /> Enable negative marking</label>{quiz.negativeMarkingEnabled && <label>Penalty for each wrong answer<input type="number" min="0" max="100" value={quiz.penaltyPerWrong} onChange={e => updateQuiz("penaltyPerWrong", Number(e.target.value))} /><small>Unanswered questions receive no penalty. Example: +2 correct and −1 wrong.</small></label>}<div className="scoring-preview"><strong>Scoring preview:</strong> {quiz.pointsPerCorrect} point{Number(quiz.pointsPerCorrect)===1?"":"s"} for each correct answer{quiz.negativeMarkingEnabled ? `, −${quiz.penaltyPerWrong} for each wrong answer.` : "."}</div><div className="scoring-preview retake-settings"><label className="checkbox-row"><input type="checkbox" checked={quiz.allowRetake} onChange={e => updateQuiz("allowRetake", e.target.checked)} /> Allow participants to retake</label>{quiz.allowRetake && <label>Maximum attempts<input type="number" min="2" max="20" value={quiz.maxAttempts} onChange={e => updateQuiz("maxAttempts", Number(e.target.value))} /><small>Includes the first attempt. Set 2 for one retake.</small></label>}</div></div></section>
-      <section className="form-card"><div className="section-title-row"><div><h2>Questions</h2><p>Add question metadata to improve participant experience and post-quiz review.</p></div><div className="form-actions-inline">{!admin && <button type="button" className="button-ghost dark small" onClick={openBank}>◇ Question Bank</button>}<button type="button" className="button-ghost dark small" onClick={addQuestion}>+ Add question</button></div></div>
-        {quiz.questions.map((q, i) => <div className="question-editor" key={i}>
+      <section className="form-card"><div className="section-title-row"><div><h2>Questions</h2><p>Add question metadata to improve participant experience and post-quiz review.</p></div><div className="form-actions-inline">{!admin && <button type="button" className="button-ghost dark small" onClick={openBank}>◇ Question Bank</button>}</div></div>
+        {quiz.questions.map((q, i) => <div className="question-editor" id={`question-editor-${i}`} key={i}>
           <div className="question-head"><strong>Question {i + 1}</strong><div className="form-actions-inline">{!admin && <button type="button" className="text-link" onClick={() => saveToBank(q)}>Save to bank</button>}{quiz.questions.length > 1 && <button type="button" className="text-danger" onClick={() => removeQuestion(i)}>Remove</button>}</div></div>
           <div className="schedule-grid">
             <label>Question type<select value={q.type} onChange={e => updateQuestion(i, "type", e.target.value)}><option value="MCQ">Multiple Choice</option><option value="TRUE_FALSE">True / False</option><option value="CORRECT_WORD">Correct Word Choice</option></select></label>
@@ -152,6 +223,10 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
           {q.type === "TRUE_FALSE" ? <><div className="review-options"><div className="review-option">A. True</div><div className="review-option">B. False</div></div><label>Correct answer<select value={q.correctAnswer} onChange={e => updateQuestion(i, "correctAnswer", e.target.value)}><option value="">Select answer</option><option value="True">True</option><option value="False">False</option></select></label></> : <><div className="option-grid">{q.options.map((o, j) => <label key={j}>Option {String.fromCharCode(65 + j)}<input value={o} onChange={e => updateOption(i, j, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + j)}`} /></label>)}</div><label>Correct answer<select value={q.correctAnswer} onChange={e => updateQuestion(i, "correctAnswer", e.target.value)}><option value="">Select correct option</option>{q.options.filter(Boolean).map((o, j) => <option key={o + j} value={o}>{o}</option>)}</select></label></>}
           <label>Answer explanation (optional)<textarea rows="3" value={q.explanation} onChange={e => updateQuestion(i, "explanation", e.target.value)} placeholder="Explain why the correct answer is right. Participants can review this after submitting." /></label>
         </div>)}
+        <div className="question-list-footer" id="question-list-footer">
+          <span>{quiz.questions.length} question{quiz.questions.length === 1 ? "" : "s"} in this quiz</span>
+          <button type="button" className="button-primary" onClick={addQuestion}>+ Add question</button>
+        </div>
       </section>
       {bankOpen && <div className="modal-backdrop bank-modal-backdrop" role="dialog" aria-modal="true" aria-label="Question Bank">
         <div className="bank-modal" onClick={e => e.stopPropagation()}>

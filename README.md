@@ -47,3 +47,10 @@ VITE_API_URL=http://localhost:8080/api
 6. Log in as the host again and open the Host Centre.
 
 Admin is created separately at startup; public registration cannot create an admin.
+
+
+## Quiz editor improvements and Class 1 seed quiz
+
+- The host quiz editor now keeps **Add question** after the question list and scrolls to a newly added question.
+- On Create Quiz, hosts can select one of their existing quizzes and clone its questions/settings into a new draft. The copied title is editable, and scheduled start/end times are cleared so the new draft does not inherit an old schedule.
+- On backend startup, an idempotent seed creates **Class 1 Mathematics - Basics (30 Questions)** for the existing `host1@quiztime.com` account, if that account exists with role `HOST`. The quiz starts as `DRAFT`; it does not bypass host approval or publish automatically. If the account does not exist yet, register/create that host account and restart the backend to seed the quiz.
