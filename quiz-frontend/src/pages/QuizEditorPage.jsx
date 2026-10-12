@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/apiClient";
 
 const emptyQuestion = () => ({
@@ -28,6 +28,8 @@ function normalizeQuestion(q) {
 export default function QuizEditorPage({ edit = false, admin = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const cloneId = searchParams.get("clone");
   const [quiz, setQuiz] = useState({ title: "", description: "", category: "Other", topic: "", durationMinutes: 10, pointsPerCorrect: 1, negativeMarkingEnabled: false, penaltyPerWrong: 0, allowRetake: false, maxAttempts: 1, resultPublished: true, certificateEnabled: false, certificateTopRanks: 3, prizeDescription: "", scheduledStartAt: "", scheduledEndAt: "", questions: [emptyQuestion()] });
   const [loading, setLoading] = useState(edit);
   const [error, setError] = useState("");
@@ -82,6 +84,44 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
   }, [edit, admin]);
 
   useEffect(() => {
+    if (edit || admin || !cloneId) return;
+    let active = true;
+    setSourceQuizId(cloneId);
+    setSourceLoading(true);
+    api.getHostQuiz(cloneId)
+      .then(source => {
+        if (!active) return;
+        setQuiz({
+          title: `${source.title || "Quiz"} (Copy)`,
+          description: source.description || "",
+          category: source.category || "Other",
+          topic: source.topic || "",
+          durationMinutes: source.durationMinutes || 10,
+          pointsPerCorrect: source.pointsPerCorrect ?? 1,
+          negativeMarkingEnabled: source.negativeMarkingEnabled === true,
+          penaltyPerWrong: source.penaltyPerWrong ?? 0,
+          allowRetake: source.allowRetake === true,
+          maxAttempts: source.maxAttempts ?? 1,
+          resultPublished: source.resultPublished ?? true,
+          certificateEnabled: source.certificateEnabled === true,
+          certificateTopRanks: source.certificateTopRanks ?? 3,
+          prizeDescription: source.prizeDescription || "",
+          scheduledStartAt: "",
+          scheduledEndAt: "",
+          questions: source.questions?.length ? source.questions.map(normalizeQuestion) : [emptyQuestion()]
+        });
+        setBankAddedIds(new Set());
+        setError("");
+        setSaved("");
+        setSourceMessage("Quiz copied into a new draft. Change the title and any details before saving.");
+        window.setTimeout(() => document.querySelector('.quiz-form input[placeholder^="e.g. General Knowledge"]')?.focus(), 50);
+      })
+      .catch(e => { if (active) setSourceMessage(e.message || "Unable to load the selected quiz to clone."); })
+      .finally(() => { if (active) setSourceLoading(false); });
+    return () => { active = false; };
+  }, [edit, admin, cloneId]);
+
+  useEffect(() => {
     if (!bankOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -103,36 +143,44 @@ export default function QuizEditorPage({ edit = false, admin = false }) {
     }, 80);
   }
   function removeQuestion(index) { setQuiz(p => ({ ...p, questions: p.questions.filter((_, i) => i !== index) })); }
-  function clonePreviousQuiz() {
-    const source = sourceQuizzes.find(item => item.id === sourceQuizId);
-    if (!source) {
+  async function clonePreviousQuiz() {
+    if (!sourceQuizId) {
       setSourceMessage("Choose a previous quiz first.");
       return;
     }
-    setQuiz({
-      title: `${source.title || "Quiz"} (Copy)`,
-      description: source.description || "",
-      category: source.category || "Other",
-      topic: source.topic || "",
-      durationMinutes: source.durationMinutes || 10,
-      pointsPerCorrect: source.pointsPerCorrect ?? 1,
-      negativeMarkingEnabled: source.negativeMarkingEnabled === true,
-      penaltyPerWrong: source.penaltyPerWrong ?? 0,
-      allowRetake: source.allowRetake === true,
-      maxAttempts: source.maxAttempts ?? 1,
-      resultPublished: source.resultPublished ?? true,
-      certificateEnabled: source.certificateEnabled === true,
-      certificateTopRanks: source.certificateTopRanks ?? 3,
-      prizeDescription: source.prizeDescription || "",
-      scheduledStartAt: "",
-      scheduledEndAt: "",
-      questions: source.questions?.length ? source.questions.map(normalizeQuestion) : [emptyQuestion()]
-    });
-    setBankAddedIds(new Set());
-    setError("");
-    setSaved("");
-    setSourceMessage("Quiz copied into a new draft. Change the title and any details before saving.");
-    window.setTimeout(() => document.querySelector('.quiz-form input[placeholder^="e.g. General Knowledge"]')?.focus(), 50);
+    setSourceLoading(true);
+    setSourceMessage("");
+    try {
+      const source = await api.getHostQuiz(sourceQuizId);
+      setQuiz({
+        title: `${source.title || "Quiz"} (Copy)`,
+        description: source.description || "",
+        category: source.category || "Other",
+        topic: source.topic || "",
+        durationMinutes: source.durationMinutes || 10,
+        pointsPerCorrect: source.pointsPerCorrect ?? 1,
+        negativeMarkingEnabled: source.negativeMarkingEnabled === true,
+        penaltyPerWrong: source.penaltyPerWrong ?? 0,
+        allowRetake: source.allowRetake === true,
+        maxAttempts: source.maxAttempts ?? 1,
+        resultPublished: source.resultPublished ?? true,
+        certificateEnabled: source.certificateEnabled === true,
+        certificateTopRanks: source.certificateTopRanks ?? 3,
+        prizeDescription: source.prizeDescription || "",
+        scheduledStartAt: "",
+        scheduledEndAt: "",
+        questions: source.questions?.length ? source.questions.map(normalizeQuestion) : [emptyQuestion()]
+      });
+      setBankAddedIds(new Set());
+      setError("");
+      setSaved("");
+      setSourceMessage("Quiz copied into a new draft. Change the title and any details before saving.");
+      window.setTimeout(() => document.querySelector('.quiz-form input[placeholder^="e.g. General Knowledge"]')?.focus(), 50);
+    } catch (e) {
+      setSourceMessage(e.message || "Unable to load the selected quiz to clone.");
+    } finally {
+      setSourceLoading(false);
+    }
   }
   async function openBank() {
     setBankOpen(true); setBankLoading(true); setBankMessage("");
